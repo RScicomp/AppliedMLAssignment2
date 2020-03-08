@@ -67,7 +67,7 @@ def randomizedsearch(X,y,model=DecisionTreeClassifier(random_state=0,criterion =
     random_search = RandomizedSearchCV(model, param_distributions=param_dist,
                                    n_iter=n_iter_search)
     start = time()
-    random_search.fit(X_train_tf, data.target)
+    random_search.fit(X, y)
     print("RandomizedSearchCV took %.2f seconds for %d candidates"
       " parameter settings." % ((time() - start), n_iter_search))
     report(random_search.cv_results_)
