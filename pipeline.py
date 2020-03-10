@@ -1,4 +1,5 @@
 from sklearn.datasets import fetch_20newsgroups
+import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn import svm
@@ -28,7 +29,8 @@ class A2Pipeline:
 
     def grid_search_tune(self):
         param_grid = {'clf__C': [0.1, 1, 10, 100]}
-        return GridSearchCV(self.pipeline, param_grid)
+
+        return GridSearchCV(self.pipeline, param_grid, cv=3, verbose=True, n_jobs=-1)
 
 
 if __name__ == '__main__':
@@ -39,15 +41,15 @@ if __name__ == '__main__':
     grid = pl.grid_search_tune()
 
     tuned = grid.fit(train_ng.data, train_ng.target)
-    untuned = pl.fit_pipeline(train_ng)
 
     tuned_pred = pl.pred(tuned, test_ng.data)
-    untuned_pred = pl.pred(untuned, test_ng.data)
 
     print("tuned pred")
-    classification_report(test_ng.target, tuned_pred)
-    np.mean(tuned_pred == test_ng.target )
+    print(classification_report(test_ng.target, tuned_pred))
+    print(np.mean(tuned_pred == test_ng.target ))
 
-    print("untuned pred")
-    classification_report(test_ng.target, untuned_pred)
-    np.mean(untuned_pred == test_ng.target)
+
+
+
+
+
