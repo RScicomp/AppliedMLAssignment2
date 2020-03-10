@@ -1,4 +1,3 @@
-
 import sklearn
 from sklearn import datasets
 from sklearn.linear_model import LogisticRegression
