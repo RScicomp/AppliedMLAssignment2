@@ -5,6 +5,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.model_selection import cross_val_score
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.pipeline import Pipeline
 import pandas as pd
 
 import numpy as np
@@ -16,9 +17,13 @@ import scipy.stats as stats
 
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
-def load_20_data():
-    data=sklearn.datasets.fetch_20newsgroups(data_home=None, subset='train', categories=None, shuffle=True, random_state=42, remove=(), download_if_missing=True)
+def load_20_train_data():
+    data=sklearn.datasets.fetch_20newsgroups(data_home=None, subset='train', categories=None, shuffle=True, random_state=42, remove=(['headers', 'footers', 'quotes']), download_if_missing=True)
     return(data)
+
+def load_20_test_data():
+    data=sklearn.datasets.fetch_20newsgroups(data_home=None, subset='test', categories=None, shuffle=True, random_state=42, remove=(['headers', 'footers', 'quotes']), download_if_missing=True)
+    return data
 
 def processtext(data):
     #Count vectorizer
@@ -88,3 +93,38 @@ def gridsearch(X,y,model=DecisionTreeClassifier(random_state=0,criterion ='gini'
       % (time() - start, len(grid_search.cv_results_['params'])))
     report(grid_search.cv_results_)
     return(grid_search)
+
+# build pipeline with model  
+def build_pipeline(model = LogisticRegression(random_state=0)):
+    return Pipeline(([
+        ('vect',CountVectorizer()),
+        ('tfidf',TfidfTransformer()),
+        ('clf',model),
+    ]))
+
+def run_pipeline(text_ds,model=LogisticRegression(random_state=0),
+                 gridsearch = False,
+                 params ={'clf__C': [0.01, 0.05, 0.1, 0.3, 1],
+                          'tfidf__use_idf': (True, False),
+                          'clf__solver':['newton-cg', 'lbfgs', 'sag', 'saga'],
+                          'clf__class_weight': ['balanced',None]
+                         }
+                ):
+    
+    pl = build_pipeline(model)
+    pl.fit(text_ds.data,text_ds.target)
+    if(gridsearch != None):
+        if(gridsearch==True):
+            search = GridSearchCV(pl, params, n_jobs=-1,verbose=1)
+        else:
+            search =RandomizedSearchCV(pl, param_distributions=params,
+                                       n_iter=10)
+        start = time()
+        search.fit(text_ds.data,text_ds.target)
+        search.fit(data.data, data.target)
+        print("SearchCV took %.2f seconds for %d candidates"
+          " parameter settings." % ((time() - start), 10))
+        report(search.cv_results_)
+        return(search)
+    else:
+        return(pl)
